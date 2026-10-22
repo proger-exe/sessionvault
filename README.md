@@ -4,24 +4,32 @@
 [![SessionVault — Собственные аккаунты. Шифрование и журнал действий.](docs/portfolio/card.png)](docs/portfolio/card.svg)
 <!-- portfolio-card:end -->
 
-Self-hosted vault for your own Telegram accounts. Sessions are imported once, stored encrypted, and handed out on demand through a private Telegram bot: login codes, profile operations, exports (Pyrogram `.session`, experimental `tdata`). One owner, no groups, every action in an append-only audit log.
+Хранить собственные Telegram-сессии на своём сервере и обращаться к ним через личного бота. SessionVault принимает сессию один раз, сохраняет её в зашифрованном виде и даёт владельцу доступ к кодам входа, операциям с профилем и экспорту.
 
-Built as an exercise in doing secret handling properly inside an ordinary aiogram project.
+Сценарий рассчитан на одного владельца и личный чат. Экспорт поддерживает Pyrogram `.session`; поддержка `tdata` экспериментальная. Действия фиксируются в журнале аудита.
 
-## Security model
+## Главная задача проекта
 
-- **Envelope encryption** (`security/envelope.py`): each account has its own data-encryption key, wrapped by a master key from the environment. Rotation is lazy: set `MASTER_KEY_V2` and workers re-wrap keys as they touch them.
-- **Secret-filtering logger** (`security/secret_filter.py`): api hashes, login codes, auth keys and tokens are redacted before they reach any handler; covered by unit tests.
-- **Append-only audit** (Alembic migration with Postgres triggers): audit rows and status history cannot be updated or deleted by the application role.
-- **Per-account locks** in Redis so two flows never drive the same MTProto session at once.
-- **Exports** are written to a tmpfs, encrypted, delivered by the bot and deleted after a short TTL.
-- `docs/threat-model.md` lists what the design does and does not protect against.
+Работа с секретами затрагивает весь путь данных: хранение, фоновые задачи, логи и временные файлы экспорта. Для каждого аккаунта используется отдельный ключ шифрования, параллельные операции координируются через Redis, а экспорт удаляется после короткого срока хранения.
 
-## Stack
+Эти решения и их границы описаны в `docs/threat-model.md`. Репозиторий позволяет оценить реализацию обращения с чувствительными данными внутри Telegram-приложения.
 
-Python 3.12, aiogram 3 + Raito, Kurigram (MTProto), SQLAlchemy 2 + Alembic on PostgreSQL, Redis + arq workers, `cryptography`, structlog. Strict mypy, ruff, pytest (55 unit tests, integration tests against Postgres/Redis).
+Обсудить похожий проект: [sh3l.beer](https://sh3l.beer).
 
-## Run
+## Обращение с секретами
+
+- `security/envelope.py`: отдельный ключ данных для каждого аккаунта шифруется мастер-ключом из окружения. После добавления `MASTER_KEY_V2` воркеры постепенно перепаковывают ключи при обращении к ним.
+- `security/secret_filter.py`: API hashes, коды входа, ключи авторизации и токены скрываются до передачи в обработчики логов. Фильтр покрыт unit-тестами.
+- PostgreSQL-триггеры из Alembic-миграций запрещают роли приложения менять и удалять строки аудита и историю статусов.
+- Блокировки Redis координируют доступ к одной MTProto-сессии из разных сценариев.
+- Экспорт записывается в tmpfs, шифруется, передаётся ботом и удаляется по короткому TTL.
+- Модель угроз и ограничения: `docs/threat-model.md`.
+
+## Стек и проверки
+
+Python 3.12, aiogram 3 + Raito, Kurigram (MTProto), SQLAlchemy 2 + Alembic, PostgreSQL, Redis + arq, `cryptography` и structlog. Настроены strict mypy, ruff и pytest; есть unit-тесты и интеграционные проверки с Postgres/Redis.
+
+## Запуск
 
 ```bash
 cp .env.example .env     # BOT_TOKEN, OWNER_ID, PYROGRAM_API_ID/HASH, MASTER_KEY
@@ -29,7 +37,7 @@ docker compose up -d --build
 docker compose exec bot alembic upgrade head
 ```
 
-Dev loop:
+Для разработки:
 
 ```bash
 docker compose up -d postgres redis
@@ -41,7 +49,7 @@ uv run sessionvault-listener     # MTProto listener for login codes
 uv run pytest tests/unit -q
 ```
 
-## Layout
+## Структура проекта
 
 ```
 src/sessionvault/
@@ -59,6 +67,6 @@ docs/               threat model, runbooks, deploy, bot map, spec (RU)
 research/           stage-0 notes on session formats and tdata
 ```
 
-## License
+## Лицензия
 
 MIT
