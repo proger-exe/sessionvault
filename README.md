@@ -1,7 +1,7 @@
 # SessionVault
 
 <!-- portfolio-card:start -->
-[![SessionVault — Собственные аккаунты. Шифрование и журнал действий.](docs/portfolio/card.png)](docs/portfolio/card.svg)
+[![sh3lby.code — нейтральная обложка](docs/portfolio/card.png)](docs/portfolio/card.svg)
 <!-- portfolio-card:end -->
 
 Self-hosted vault for your own Telegram accounts. Sessions are imported once, stored encrypted, and handed out on demand through a private Telegram bot: login codes, profile operations, exports (Pyrogram `.session`, experimental `tdata`). One owner, no groups, every action in an append-only audit log.
