@@ -1,0 +1,80 @@
+services:
+  bot:
+    build: .
+    command: ["sh", "-c", "alembic upgrade head && sessionvault-bot"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tg:tg@postgres:5432/sessionvault
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tmpfs:
+      - /tmp/sessionvault-exports
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["sessionvault-worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tg:tg@postgres:5432/sessionvault
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tmpfs:
+      - /tmp/sessionvault-exports
+    restart: unless-stopped
+
+  # ponytail: MVP — новые аккаунты подхватятся только после `restart listener`.
+  listener:
+    build: .
+    command: ["sessionvault-listener"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tg:tg@postgres:5432/sessionvault
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tg
+      POSTGRES_PASSWORD: tg
+      POSTGRES_DB: sessionvault
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tg -d sessionvault"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

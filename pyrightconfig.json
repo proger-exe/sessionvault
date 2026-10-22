@@ -1,0 +1,9 @@
+{
+    "include": ["src", "tests"],
+    "exclude": ["**/__pycache__", "research", ".venv", "alembic/versions"],
+    "extraPaths": ["src"],
+    "venvPath": ".",
+    "venv": ".venv",
+    "pythonVersion": "3.12",
+    "reportMissingImports": "warning"
+}

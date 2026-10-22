@@ -1,0 +1,7 @@
+.env
+_state/
+__pycache__/
+*.session
+*.session-journal
+tdata/
+uv.lock

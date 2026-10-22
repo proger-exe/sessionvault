@@ -1,0 +1,30 @@
+[project]
+name = "sessionvault-research"
+version = "0.0.0"
+description = "Stage 0 research prototype for SessionVault: login/profile/export"
+requires-python = ">=3.12"
+# Kurigram (fork Pyrogram) ставится в тот же пакет `pyrogram`, поэтому все
+# импорты остаются `from pyrogram import ...`. Оригинальный pyrogram отдельно
+# не тянем — конфликт namespace.
+dependencies = [
+    "kurigram>=2.2.0",
+    "tgcrypto>=1.2.5",
+    "opentele>=1.15.1",
+    "telethon>=1.36.0",       # тянет opentele; фиксируем совместимую версию
+    "python-dotenv>=1.0.1",
+    "rich>=13.9.4",
+    "pillow>=10.4.0",
+]
+
+[project.optional-dependencies]
+# fallback: если понадобится сверить поведение с upstream Pyrogram.
+pyrogram = [
+    "pyrogram>=2.0.106",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

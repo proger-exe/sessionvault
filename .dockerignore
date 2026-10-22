@@ -1,0 +1,17 @@
+.venv
+research/.venv
+research/_state
+.pytest_cache
+.ruff_cache
+.mypy_cache
+__pycache__
+*.pyc
+.env
+.git
+.agents
+.codex
+tests
+docs
+research
+*.session
+*.log
